@@ -14,7 +14,7 @@ struct Model {
 }
 
 // Make sure this matches `PORT` in the `osc_receiver.rs` example.
-const TARGET_PORT: u16 = 34254;
+const TARGET_PORT: u16 = 8000;
 
 fn target_address_string() -> String {
     format!("{}:{}", "127.0.0.1", TARGET_PORT)

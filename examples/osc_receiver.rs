@@ -14,7 +14,7 @@ struct Model {
 }
 
 // Make sure this matches the `TARGET_PORT` in the `osc_sender.rs` example.
-const PORT: u16 = 34254;
+const PORT: u16 = 8000;
 
 fn model(app: &App) -> Model {
     app.new_window()

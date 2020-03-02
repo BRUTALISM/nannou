@@ -22,7 +22,7 @@ conrod_vulkano = "0.68"
 daggy = "0.6"
 find_folder = "0.3"
 image = "0.21"
-lyon = "0.14"
+lyon = "0.15"
 noise = "0.5"
 notosans = { version = "0.1", optional = true }
 palette = "0.4"

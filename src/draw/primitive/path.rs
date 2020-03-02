@@ -8,11 +8,12 @@ use crate::draw::properties::{
 use crate::draw::{self, Drawing, DrawingContext};
 use crate::geom::{self, pt2, Point2};
 use crate::math::BaseFloat;
-use lyon::path::iterator::FlattenedIterator;
+//use lyon::path::iterator::FlattenedIterator;
+use lyon::math::{point, Point};
 use lyon::path::PathEvent;
-use lyon::tessellation::geometry_builder::{self, GeometryBuilder, GeometryBuilderError, VertexId};
+use lyon::tessellation::geometry_builder::{self, GeometryBuilder, FillGeometryBuilder, StrokeGeometryBuilder, GeometryBuilderError, VertexId};
 use lyon::tessellation::{
-    FillOptions, FillTessellator, FillVertex, StrokeOptions, StrokeTessellator, StrokeVertex,
+    FillOptions, FillTessellator, StrokeOptions, StrokeTessellator,
     TessellationResult,
 };
 use std::cell::Cell;
@@ -33,7 +34,7 @@ pub trait TessellationOptions {
         &self,
         tessellator: &mut Self::Tessellator,
         events: I,
-        output: &mut dyn GeometryBuilder<Self::VertexInput>,
+        output: &mut dyn GeometryBuilder,
     ) -> TessellationResult
     where
         I: IntoIterator<Item = PathEvent>;
@@ -102,8 +103,7 @@ impl<S> PathInit<S> {
     /// The returned building context allows for specifying the fill tessellation options.
     pub fn fill(self) -> PathFill<S> {
         let mut opts = FillOptions::default();
-        opts.compute_normals = false;
-        opts.on_error = lyon::tessellation::OnError::Recover;
+        opts.handle_intersections = true;
         PathFill::new(opts)
     }
 
@@ -190,7 +190,7 @@ where
     where
         S: BaseFloat,
         I: IntoIterator<Item = PathEvent>,
-        for<'a> PathGeometryBuilder<'a, 'ctxt, S>: GeometryBuilder<T::VertexInput>,
+        for<'a> PathGeometryBuilder<'a, 'ctxt, S>: GeometryBuilder,
     {
         let DrawingContext {
             mesh,
@@ -232,7 +232,7 @@ where
         S: BaseFloat,
         I: IntoIterator,
         I::Item: Into<Point2<S>>,
-        for<'a> PathGeometryBuilder<'a, 'ctxt, S>: GeometryBuilder<T::VertexInput>,
+        for<'a> PathGeometryBuilder<'a, 'ctxt, S>: GeometryBuilder,
     {
         self.points_inner(ctxt, false, points)
     }
@@ -245,7 +245,7 @@ where
         S: BaseFloat,
         I: IntoIterator,
         I::Item: Into<Point2<S>>,
-        for<'a> PathGeometryBuilder<'a, 'ctxt, S>: GeometryBuilder<T::VertexInput>,
+        for<'a> PathGeometryBuilder<'a, 'ctxt, S>: GeometryBuilder,
     {
         self.points_inner(ctxt, true, points)
     }
@@ -261,7 +261,7 @@ where
         S: BaseFloat,
         I: IntoIterator,
         I::Item: Into<Point2<S>>,
-        for<'a> PathGeometryBuilder<'a, 'ctxt, S>: GeometryBuilder<T::VertexInput>,
+        for<'a> PathGeometryBuilder<'a, 'ctxt, S>: GeometryBuilder,
     {
         let DrawingContext {
             mesh,
@@ -313,7 +313,7 @@ where
         S: BaseFloat,
         I: IntoIterator,
         I::Item: Into<ColoredPoint2<S>>,
-        for<'a> PathGeometryBuilder<'a, 'ctxt, S>: GeometryBuilder<T::VertexInput>,
+        for<'a> PathGeometryBuilder<'a, 'ctxt, S>: GeometryBuilder,
     {
         let DrawingContext {
             mesh,
@@ -459,7 +459,7 @@ where
     T: TessellationOptions,
     PathOptions<T, S>: Into<Primitive<S>>,
     Primitive<S>: Into<Option<PathOptions<T, S>>>,
-    for<'b, 'ctxt> PathGeometryBuilder<'b, 'ctxt, S>: GeometryBuilder<T::VertexInput>,
+    for<'b, 'ctxt> PathGeometryBuilder<'b, 'ctxt, S>: GeometryBuilder,
 {
     /// Submit the path events to be tessellated.
     pub fn events<I>(self, events: I) -> DrawingPath<'a, S>
@@ -504,7 +504,6 @@ impl<S> SetStroke for PathStroke<S> {
 
 impl TessellationOptions for FillOptions {
     type Tessellator = FillTessellator;
-    type VertexInput = FillVertex;
 
     fn tessellator(tessellators: Tessellators) -> &mut Self::Tessellator {
         tessellators.fill
@@ -514,18 +513,17 @@ impl TessellationOptions for FillOptions {
         &self,
         tessellator: &mut Self::Tessellator,
         events: I,
-        output: &mut dyn GeometryBuilder<Self::VertexInput>,
+        output: &mut dyn FillGeometryBuilder,
     ) -> TessellationResult
     where
         I: IntoIterator<Item = PathEvent>,
     {
-        tessellator.tessellate_path(events, self, output)
+        tessellator.tessellate(events, self, output)
     }
 }
 
 impl TessellationOptions for StrokeOptions {
     type Tessellator = StrokeTessellator;
-    type VertexInput = StrokeVertex;
 
     fn tessellator(tessellators: Tessellators) -> &mut Self::Tessellator {
         tessellators.stroke
@@ -535,12 +533,12 @@ impl TessellationOptions for StrokeOptions {
         &self,
         tessellator: &mut Self::Tessellator,
         events: I,
-        output: &mut dyn GeometryBuilder<Self::VertexInput>,
+        output: &mut dyn StrokeGeometryBuilder,
     ) -> TessellationResult
     where
         I: IntoIterator<Item = PathEvent>,
     {
-        tessellator.tessellate_path(events, self, output)
+        tessellator.tessellate(events, self, output)
     }
 }
 

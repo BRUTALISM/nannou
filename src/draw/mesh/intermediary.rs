@@ -3,7 +3,6 @@ use crate::geom::{self, Point2, Point3};
 use crate::math::BaseFloat;
 use crate::mesh::vertex::{WithColor, WithTexCoords};
 use lyon::tessellation::geometry_builder::{self, GeometryBuilder, GeometryBuilderError, VertexId};
-use lyon::tessellation::{FillVertex, StrokeVertex};
 use std::ops;
 
 /// Types supported by the **IntermediaryMesh** **GeometryBuilder** implementation.
